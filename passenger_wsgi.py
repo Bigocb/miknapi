@@ -1,7 +1,7 @@
 import sys, os
 import time
 
-INTERP = os.path.join(os.environ['HOME'], 'parents.myplex.life', 'venv/bin', 'python')
+INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
 if sys.executable != INTERP:
     os.execl(INTERP, INTERP, *sys.argv)
 sys.path.append(os.getcwd())
@@ -9,12 +9,15 @@ sys.path.append(os.getcwd())
 import logging
 import pymysql
 from flask import Flask, request, jsonify
+from flask_jwt import JWT, jwt_required, current_identity
 from flask_restful import Resource, Api
 from flask_cors import CORS, cross_origin
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
 from json import dumps
 import simplejson as json
-from flask import Flask, redirect
+#import requests
+from newsapi import NewsApiClient
+from flask import redirect
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -345,7 +348,31 @@ class TaskDetail(Resource):
         query = conn.execute("update tasks set readcount = readcount+1 where id = {0}".format(id))
         return {'status': 'read count updated'}
 
+class getNewsSources(Resource):
 
+    def get(self):
+        sources = newsapi.get_sources()
+        return sources
+class getUsersNews(Resource):
+
+    def get(self, familyid):
+        conn = db_connect.connect()
+        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
+        query = conn.execute(q)
+        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+
+        if results:
+            for i in results:
+                topic = i['prefvalue']
+                logging.info(topic)
+            all_articles = newsapi.get_everything(q=topic)
+            articles = all_articles['articles']
+            return articles
+        else:
+            return None
+
+api.add_resource(getUsersNews,'/news/user/<familyid>')
+api.add_resource(getNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')    # used
 api.add_resource(NewTasksExternal, '/external/tasks')    # used
 api.add_resource(TaskDetail, '/task/<id>')   # used
