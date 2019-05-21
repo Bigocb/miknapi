@@ -30,6 +30,8 @@ handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 
+newsapi = NewsApiClient(api_key='1654f224d44d4dc491f416ef7950a051')
+
 # add the handlers to the logger
 logger.addHandler(handler)
 
