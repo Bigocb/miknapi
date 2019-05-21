@@ -16,7 +16,7 @@ from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
 from json import dumps
 import simplejson as json
 #import requests
-from newsapi import NewsApiClient
+from newsapi.newsapi_client import NewsApiClient
 from flask import redirect
 
 logger = logging.getLogger()
