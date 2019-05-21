@@ -353,6 +353,7 @@ class getNewsSources(Resource):
     def get(self):
         sources = newsapi.get_sources()
         return sources
+
 class getUsersNews(Resource):
 
     def get(self, familyid):
@@ -369,13 +370,13 @@ class getUsersNews(Resource):
             articles = all_articles['articles']
             return articles
         else:
-            return None
+            return 'no articles'
 
 api.add_resource(getUsersNews,'/news/user/<familyid>')
 api.add_resource(getNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')
 api.add_resource(NewTasksExternal, '/external/tasks')    # used
-api.add_resource(TaskDetail, '/task/<id>')   
+api.add_resource(TaskDetail, '/task/<id>')
 api.add_resource(PostList, '/task/list/<id>')   # used
 api.add_resource(UserPrefs, '/person/prefs/<familyid>')   # used
 api.add_resource(Userlists, '/person/list/<familyid>')   # u
