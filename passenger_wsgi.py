@@ -379,12 +379,12 @@ class GetNewsSources(Resource):
         try:
             conn.execute(ins)
 
-            status = 'View Added'
+            status = 'New Source Added'
             output = jsonify(status)
 
         except:
 
-            status = 'View Not Added'
+            status = 'Source Not Added'
             output = jsonify(status)
 
         return output
