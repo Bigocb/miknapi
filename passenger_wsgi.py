@@ -342,7 +342,7 @@ class TaskDetail(Resource):
         logging.debug(request.json)
         print(request.json)
         query = conn.execute("delete from tasks where id = '{0}'".format(id))
-	query2 = conn.execute("delete from userlistposts where postid = '{0}'".format(id))
+        query2 = conn.execute("delete from userlistposts where postid = '{0}'".format(id))
         return {'status': 'success'}
 
     def get(self, id):
@@ -356,13 +356,40 @@ class TaskDetail(Resource):
         query = conn.execute("update tasks set readcount = readcount+1 where id = {0}".format(id))
         return {'status': 'read count updated'}
 
-class getNewsSources(Resource):
+class GetNewsSources(Resource):
 
     def get(self):
         sources = newsapi.get_sources()
         return sources
 
-class getUsersNews(Resource):
+    def put(self):
+        conn = db_connect.connect()
+        source = request.json['source']
+        user = request.json['userid']
+        paramtype = '2'
+
+        userprefs = Table('userprefs', meta)
+
+        ins = userprefs.insert().values(
+            variable=paramtype,
+            prefvalue=source,
+            userid=user
+        )
+
+        try:
+            conn.execute(ins)
+
+            status = 'View Added'
+            output = jsonify(status)
+
+        except:
+
+            status = 'View Not Added'
+            output = jsonify(status)
+
+        return output
+
+class GetUsersNews(Resource):
 
     def get(self, familyid):
         conn = db_connect.connect()
@@ -380,8 +407,8 @@ class getUsersNews(Resource):
         else:
             return 'no articles'
 
-api.add_resource(getUsersNews,'/news/user/<familyid>')
-api.add_resource(getNewsSources,'/news/sources')
+api.add_resource(GetUsersNews,'/news/user/<familyid>')
+api.add_resource(GetNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')
 api.add_resource(NewTasksExternal, '/external/tasks')    # used
 api.add_resource(TaskDetail, '/task/<id>')
