@@ -394,7 +394,7 @@ class GetUsersNews(Resource):
 
     def get(self, familyid):
         conn = db_connect.connect()
-        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
+        q = select([user_prefs_t.c.prefvalue,user_prefs_t.c.id]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
         results = ','.join([r[0] for r in query.cursor.fetchall()])
 
