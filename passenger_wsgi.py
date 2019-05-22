@@ -397,8 +397,8 @@ class GetNewsSources(Resource):
 class GetUsersNews(Resource):
 
     def get(self, familyid):
-        dbstart = time.time()
-        logger.info(dbstart)
+        start = time.time()
+        logger.info(start)
         conn = db_connect.connect()
         q = select([user_prefs_t.c.prefvalue,user_prefs_t.c.id]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
@@ -416,6 +416,10 @@ class GetUsersNews(Resource):
         apiebd = time.time()
         logger.info(apiebd)
         articles = all_articles['articles']
+        end = time.time()
+        diff = end-start
+        logger.info(diff)
+
         return articles
 
 
