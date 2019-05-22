@@ -408,6 +408,14 @@ class GetUsersNews(Resource):
         else:
             return 'no articles'
 
+    def put(self,familyid):
+        conn = db_connect.connect()
+        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
+        query = conn.execute(q)
+        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+        return jsonify(results)
+
+
 api.add_resource(GetUsersNews,'/news/user/<familyid>')
 api.add_resource(GetNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')
