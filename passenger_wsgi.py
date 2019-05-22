@@ -398,12 +398,6 @@ class GetUsersNews(Resource):
         query = conn.execute(q)
         topiclist = ','.join([r[0] for r in query.cursor.fetchall()])
         logging.info(topiclist)
-        # results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-
-        # if results:
-        #     for i in results:
-        #         topic = i['prefvalue']
-        #         logging.info(topic)
         all_articles = newsapi.get_everything(sources=topiclist)
         articles = all_articles['articles']
         return articles
