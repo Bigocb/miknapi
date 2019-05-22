@@ -400,6 +400,8 @@ class GetUsersNews(Resource):
         logging.info(q)
         logging.info('test')
         logging.info(topiclist)
+        t = topiclist
+        logging.info(t)
         all_articles = newsapi.get_everything(sources=topiclist)
         articles = all_articles['articles']
         return articles
@@ -416,7 +418,7 @@ class GetUsersNews(Resource):
 api.add_resource(GetUsersNews,'/news/user/<familyid>')
 api.add_resource(GetNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')
-api.add_resource(NewTasksExternal, '/external/tasks')  
+api.add_resource(NewTasksExternal, '/external/tasks')
 api.add_resource(TaskDetail, '/task/<id>')
 api.add_resource(PostList, '/task/list/<id>')   # used
 api.add_resource(UserPrefs, '/person/prefs/<familyid>')   # used
