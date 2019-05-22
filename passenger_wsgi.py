@@ -396,13 +396,13 @@ class GetUsersNews(Resource):
         conn = db_connect.connect()
         q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
-        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+        results = ','.join([r[0] for r in query.cursor.fetchall()])
 
         if results:
             for i in results:
                 topic = i['prefvalue']
                 logging.info(topic)
-            all_articles = newsapi.get_everything(q=topic)
+            all_articles = newsapi.get_everything(sources=topic)
             articles = all_articles['articles']
             return articles
         else:
