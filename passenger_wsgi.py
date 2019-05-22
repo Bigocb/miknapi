@@ -364,7 +364,11 @@ class GetNewsSources(Resource):
         return sources
 
     def put(self):
+        dbstart = time.time()
+        logger.info(dbstart)
         conn = db_connect.connect()
+        dbend = time.time()
+        logger.info(dbend)
         source = request.json['sourcedata']['id']
         user = request.json['family']['familyid']
         paramtype = '2'
@@ -393,16 +397,24 @@ class GetNewsSources(Resource):
 class GetUsersNews(Resource):
 
     def get(self, familyid):
+        dbstart = time.time()
+        logger.info(dbstart)
         conn = db_connect.connect()
         q = select([user_prefs_t.c.prefvalue,user_prefs_t.c.id]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
         topiclist = ','.join([r[0] for r in query.cursor.fetchall()])
+        dbend = time.time()
+        logger.info(dbend)
         logging.info(q)
         logging.info('test')
         logging.info(topiclist)
         t = topiclist
         logging.info(t)
+        apistart = time.time()
+        logger.info(apistart)
         all_articles = newsapi.get_everything(sources=topiclist)
+        apiebd = time.time()
+        logger.info(apiebd)
         articles = all_articles['articles']
         return articles
 
