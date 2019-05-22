@@ -400,15 +400,14 @@ class GetUsersNews(Resource):
         logging.info(topiclist)
         # results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
 
-        if results:
-            for i in results:
-                topic = i['prefvalue']
-                logging.info(topic)
-            all_articles = newsapi.get_everything(sources=topic)
-            articles = all_articles['articles']
-            return articles
-        else:
-            return 'no articles'
+        # if results:
+        #     for i in results:
+        #         topic = i['prefvalue']
+        #         logging.info(topic)
+        all_articles = newsapi.get_everything(sources=topiclist)
+        articles = all_articles['articles']
+        return articles
+
 
     def put(self,familyid):
         conn = db_connect.connect()
