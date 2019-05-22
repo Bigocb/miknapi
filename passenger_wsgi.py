@@ -366,7 +366,7 @@ class GetNewsSources(Resource):
     def put(self):
         conn = db_connect.connect()
         source = request.json['sourcedata']['id']
-        user = request.json['family']['id']
+        user = request.json['family']['familyid']
         paramtype = '2'
 
         userprefs = Table('userprefs', meta)
