@@ -397,6 +397,8 @@ class GetUsersNews(Resource):
         q = select([user_prefs_t.c.prefvalue,user_prefs_t.c.id]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
         topiclist = ','.join([r[0] for r in query.cursor.fetchall()])
+        logging.info(q)
+        logging.info('test')
         logging.info(topiclist)
         all_articles = newsapi.get_everything(sources=topiclist)
         articles = all_articles['articles']
@@ -414,7 +416,7 @@ class GetUsersNews(Resource):
 api.add_resource(GetUsersNews,'/news/user/<familyid>')
 api.add_resource(GetNewsSources,'/news/sources')
 api.add_resource(NewTasksInternal, '/new/tasks')
-api.add_resource(NewTasksExternal, '/external/tasks')    # used
+api.add_resource(NewTasksExternal, '/external/tasks')  
 api.add_resource(TaskDetail, '/task/<id>')
 api.add_resource(PostList, '/task/list/<id>')   # used
 api.add_resource(UserPrefs, '/person/prefs/<familyid>')   # used
