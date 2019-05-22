@@ -359,7 +359,8 @@ class TaskDetail(Resource):
 class GetNewsSources(Resource):
 
     def get(self):
-        sources = newsapi.get_sources()
+        sourcesorig = newsapi.get_sources()
+        sources = sourcesorig['sources']
         return sources
 
     def put(self):
