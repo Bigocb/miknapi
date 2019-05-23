@@ -22,25 +22,92 @@ db_connect = create_engine('mysql+pymysql://phelper:Lscooter11@mysql.monkeyandjo
 meta = MetaData(db_connect, reflect=True)
 user_prefs_t = meta.tables['userprefs']
 tags_t = meta.tables['tags']
+tag_post_t = meta.tables['taskids']
+person_t = meta.tables['person']
 
 
-def dbConnection(q=None):
+def dbconnection(q=None):
     conn = db_connect.connect()
     query = conn.execute(q)
     return query
 
 
-def getUserPrefs(familyid=None):
+def authorizeuser(new=None,firstName=None,lastName=None,email=None,password=None,username=None):
+
+    if new:
+        personadd = Table('person', meta)
+
+        ins = personadd.insert().values(
+            firstname=firstName,
+            lastname =lastName,
+            username=username,
+            password=password,
+            email=email
+        )
+
+        try:
+
+            query = dbconnection(ins)
+            return 'User Added'
+
+        except:
+
+            return 'User Not Added'
+
+    else:
+        q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
+        query = dbconnection(q)
+        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+        return jsonify(results)
+
+
+def getuserprefs(familyid=None):
     q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
-    query = dbConnection(q)
+    query = dbconnection(q)
     results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
     return jsonify(results)
 
-def getTags():
-    q = select([tags_t.c.id,tags_t.c.tag])
-    query = dbConnection(q)
+
+def gettags(top=None):
+
+    if top:
+        join_obj_tags = tags_t \
+            .join(tag_post_t, tags_t.c.id == tag_post_t.c.tagid)
+        listlimit = 10
+
+        q = select([tags_t.c.tag,tags_t.c.id,func.count(tag_post_t.c.tagid)])\
+            .select_from(join_obj_tags)\
+            .group_by(tags_t.c.tag,tags_t.c.id)\
+            .order_by(func.count(tag_post_t.c.tagid).desc())\
+            .limit(listlimit)
+
+    else:
+        q = select([tags_t.c.id, tags_t.c.tag])
+
+    query = dbconnection(q)
     result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
     return jsonify(result)
+
+
+def addtags(tag = None):
+    views = Table('tags', meta)
+
+    ins = views.insert().values(
+            tag = tag
+    )
+
+    try:
+
+        query = dbconnection(ins)
+        return 'Tag Added'
+
+    except:
+
+        return 'Tag Not Added'
+
+
+
+
 
 
 

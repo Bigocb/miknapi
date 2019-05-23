@@ -2,9 +2,9 @@ import sys, os
 import time
 
 INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
- #if sys.executable != INTERP:
- #    os.execl(INTERP, INTERP, *sys.argv)
- #sys.path.append(os.getcwd())
+if sys.executable != INTERP:
+    os.execl(INTERP, INTERP, *sys.argv)
+sys.path.append(os.getcwd())
 
 import logging
 from flask import Flask, request, jsonify
@@ -12,7 +12,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
 from newsapi.newsapi_client import NewsApiClient
-from data.data import getUserPrefs, getTags
+from data.data import getuserprefs, gettags,addtags, authorizeuser
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -52,45 +52,27 @@ def index():
 
 class Tags(Resource):
     def get(self):
-        result = getTags()
+        top = request.args.get('top')
+        result = gettags(top=top)
         return result
 
     def put(self):
-        conn = db_connect.connect()
         tag = request.json['tag']
-        query = conn.execute("insert into tags(tag) values('{0}')".format(tag))
-        return {'status': 'Tag Added'}
+        query = addtags(tag)
+        return query
 
-
-class TopTags(Resource):
-    def get(self):
-        conn = db_connect.connect()
-        query = conn.execute("select tag, tagid, count(tag) as count from taskids a join tags b on a.tagid = b.id  where lower(b.tag) <> 'archive' group by tag, tagid order by 3 desc limit 10")
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return jsonify(result)
 
 class Auth(Resource):
     def post(self):
-        conn = db_connect.connect()
-	logging.info(request.json)
-	password = request.json['password']
-	username = request.json['username']
-        query = conn.execute("select * from person where password = '{0}' and username = '{1}'".format(password,username))
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-	logging.info(result)
-	return result[0]
-
-class Register(Resource):
-    def post(self):
-        conn = db_connect.connect()
-        logging.info(request.json)
+        new = request.args.get('new')
         password = request.json['password']
         username = request.json['username']
-	firstname = request.json['firstName']
-	lastname = request.json['lastName']
-	email = request.json['email']
-        query = conn.execute("insert into person(firstname,lastname,username,password,email) values ('{0}','{1}','{2}','{3}','{4}')".format(firstname,lastname,username,password,email))
-        return {'status': 'success'}
+        firstname = request.json['firstName'] if new else None
+        lastname = request.json['lastName'] if new else None
+        email = request.json['email'] if new else None
+
+        query = authorizeuser(new=new,password=password, username=username,firstName=firstname,lastName=lastname,email=email)
+        return query
 
 class AddTags(Resource):
     def put(self, taskid):
@@ -418,7 +400,7 @@ class GetUsersNews(Resource):
         return articles
 
     def put(self,familyid):
-        result = getUserPrefs(familyid)
+        result = getuserprefs(familyid)
         return result
 
 
@@ -442,10 +424,9 @@ api.add_resource(UserTasksMostRead,'/read/tasks/<familyid>') #refactor to /perso
 api.add_resource(UserTasks, '/tasks/<familyid>')   # used
 api.add_resource(UserEmail, '/person/<email>')    # used
 api.add_resource(Tags, '/tags')    # used
-api.add_resource(TopTags, '/top/tags')    # used
 api.add_resource(UserPostsByTag, '/tag/<tag>')
 api.add_resource(Auth, '/users/authenticate')
-api.add_resource(Register, '/users/register')    # used
+# api.add_resource(Register, '/users/register')    # used
 api.add_resource(AddTags, '/add/tags/<taskid>')    # used
 api.add_resource(DeleteTags, '/delete/tags/<taskid>')    # used
 import sys, os
