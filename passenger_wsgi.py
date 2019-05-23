@@ -1,23 +1,18 @@
 import sys, os
 import time
 
-INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
-if sys.executable != INTERP:
-    os.execl(INTERP, INTERP, *sys.argv)
-sys.path.append(os.getcwd())
+#INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
+# if sys.executable != INTERP:
+#     os.execl(INTERP, INTERP, *sys.argv)
+# sys.path.append(os.getcwd())
 
 import logging
-import pymysql
 from flask import Flask, request, jsonify
-from flask_jwt import JWT, jwt_required, current_identity
 from flask_restful import Resource, Api
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
-from json import dumps
-import simplejson as json
-#import requests
 from newsapi.newsapi_client import NewsApiClient
-from flask import redirect
+from data.data import getUserPrefs, getTags
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -57,10 +52,8 @@ def index():
 
 class Tags(Resource):
     def get(self):
-        conn = db_connect.connect()
-        query = conn.execute("select * from tags order by tag desc")
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return jsonify(result)
+        result = getTags()
+        return result
 
     def put(self):
         conn = db_connect.connect()
@@ -356,6 +349,7 @@ class TaskDetail(Resource):
         query = conn.execute("update tasks set readcount = readcount+1 where id = {0}".format(id))
         return {'status': 'read count updated'}
 
+
 class GetNewsSources(Resource):
 
     def get(self):
@@ -394,6 +388,7 @@ class GetNewsSources(Resource):
 
         return output
 
+
 class GetUsersNews(Resource):
 
     def get(self, familyid):
@@ -422,13 +417,9 @@ class GetUsersNews(Resource):
 
         return articles
 
-
     def put(self,familyid):
-        conn = db_connect.connect()
-        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
-        query = conn.execute(q)
-        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-        return jsonify(results)
+        result = getUserPrefs(familyid)
+        return result
 
 
 api.add_resource(GetUsersNews,'/news/user/<familyid>')
