@@ -92,7 +92,7 @@ class PostTags(Resource):
         return query
 
 
-class NewTasksInternal(Resource):
+class NewPost(Resource):
     def post(self):
         task = request.json['task']
         familyid = request.json['familyid']
@@ -108,105 +108,19 @@ class NewTasksInternal(Resource):
         )
         return query
 
-# Users
 
-class UsersAll(Resource):
-    def get(self):
-        conn = db_connect.connect()
-        query = conn.execute("select *  from person a")
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return jsonify(result)
+class Posts(Resource):
+    def get(self, familyid):
+        query = postclass.postlist(familyid=familyid)
+        return query
 
 
 class UserEmail(Resource):
     def get(self, email):
-        conn = db_connect.connect()
-        query = conn.execute("select a.familyid from person a  where a.email  ='{0}'".format(email))
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return result[0]
+        query = userclass.userid(email=email)
+        return query
 
-
-class UserTasks(Resource):
-    def get(self, familyid):
-        conn = db_connect.connect()
-        query = conn.execute(
-            "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(
-                familyid))
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return jsonify(result)
-
-
-# class UserToDo(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         param = 'todo'
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and c.tag like '{1}' group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 familyid, (param)))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
-# class UserPostsByTag(Resource):
-#     def get(self, tag):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = 4 and approved is not null and c.tag = '{0}' group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 tag))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
-# class UserToRead(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and lower(c.tag) = 'want to read' group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
-# class UserArchived(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and lower(c.tag) = 'archive' group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
-class UserRecentlyAdded(Resource):
-    def get(self, familyid):
-        conn = db_connect.connect()
-        query = conn.execute(
-            "select a.addedts, a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = '{0}' and a.addedts > NOW() - INTERVAL 1 WEEK and approved is not null and (b.taskid not in (select taskid from taskids a join tags b on a.tagid = b.id where lower(b.tag) = 'archive') or b.taskid is null)  group by a.task,a.id,a.familyid order by addedts desc limit 5".format(
-                familyid))
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return jsonify(result)
-
-
-# class UserTasksMostRead(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag)  as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and readcount > 0 and Lower(c.tag) <> 'archive' group by a.task,a.id,a.familyid   order by readcount desc".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
-# class ApprovalQueue(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is null group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-
-
+###################
 class Userlists(Resource):
     def get(self, familyid):
         logging.info('connecting')
@@ -271,13 +185,6 @@ class Userlistposts(Resource):
             "delete from userlistposts where postid = '{0}' and listid = (select id from userlists where name = '{1}' and familyid = '{2}') ".format(
                 postid, listid, familyid))
         return {'status': 'success'}
-
-
-# class ApproveTask(Resource):
-#     def put(self, id):
-#         conn = db_connect.connect()  # connect to database
-#         query = conn.execute("update tasks set approved  = 1  where id = {0}".format(id))
-#         return {'status': 'success'}
 
 
 class PostList(Resource):
@@ -408,26 +315,112 @@ class GetUsersNews(Resource):
 api.add_resource(GetUsersNews, '/news/user/<familyid>')
 api.add_resource(GetNewsSources, '/news/sources')
 
-api.add_resource(NewTasksInternal, '/new/post')
+api.add_resource(NewPost, '/new/post') #refactor to take ?new=true
 api.add_resource(TaskDetail, '/post/<id>')
 api.add_resource(PostList, '/post/list/<id>') #change
 
 api.add_resource(Userlists, '/person/list/<familyid>')  # u
 api.add_resource(Userlistposts, '/person/list/posts/<familyid>')  # u
+api.add_resource(Posts, '/tasks/<familyid>')  # used
+api.add_resource(UserEmail, '/person/<email>')  # used
+api.add_resource(Tags, '/tags')  # used
+
+api.add_resource(Auth, '/users/authenticate')  # used
+api.add_resource(PostTags, '/post/tag')  # used
+
+# api.add_resource(UserPostsByTag, '/tag/<tag>')
 # api.add_resource(UserToDo, '/person/todo/<familyid>')
 # api.add_resource(UserToRead, '/person/toread/<familyid>')  # used
 # api.add_resource(UserArchived, '/person/archive/<familyid>')  # used
-api.add_resource(UsersAll, '/users')  # used
+# api.add_resource(UsersAll, '/users')  # used
 # api.add_resource(ApproveTask, '/app/task/<id>')  # used
 # api.add_resource(ApprovalQueue, '/approve/tasks/<familyid>')  # used
-api.add_resource(UserRecentlyAdded, '/person/recent/<familyid>')  # used
-# api.add_resource(UserTasksMostRead, '/read/tasks/<familyid>')  # refactor to /person/frequent
-api.add_resource(UserTasks, '/tasks/<familyid>')  # used
-api.add_resource(UserEmail, '/person/<email>')  # used
-api.add_resource(Tags, '/tags')  # used
-# api.add_resource(UserPostsByTag, '/tag/<tag>')
-api.add_resource(Auth, '/users/authenticate')
-# api.add_resource(Register, '/users/register')    # used
-api.add_resource(PostTags, '/post/tag')  # used
-import sys, os
-import time
+# api.add_resource(UserRecentlyAdded, '/person/recent/<familyid>')  # used
+# api.add_resource(UserTasksMostRead, '/read/tasks/<familyid>')
+
+# class UserToDo(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         param = 'todo'
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and c.tag like '{1}' group by a.task,a.id,a.familyid order by lastupdate desc".format(
+#                 familyid, (param)))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class UserPostsByTag(Resource):
+#     def get(self, tag):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = 4 and approved is not null and c.tag = '{0}' group by a.task,a.id,a.familyid order by lastupdate desc".format(
+#                 tag))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class UserToRead(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and lower(c.tag) = 'want to read' group by a.task,a.id,a.familyid order by lastupdate desc".format(
+#                 familyid))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class UserArchived(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and lower(c.tag) = 'archive' group by a.task,a.id,a.familyid order by lastupdate desc".format(
+#                 familyid))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class UserRecentlyAdded(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.addedts, a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = '{0}' and a.addedts > NOW() - INTERVAL 1 WEEK and approved is not null and (b.taskid not in (select taskid from taskids a join tags b on a.tagid = b.id where lower(b.tag) = 'archive') or b.taskid is null)  group by a.task,a.id,a.familyid order by addedts desc limit 5".format(
+#                 familyid))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class UserTasksMostRead(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag)  as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null and readcount > 0 and Lower(c.tag) <> 'archive' group by a.task,a.id,a.familyid   order by readcount desc".format(
+#                 familyid))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+# class ApprovalQueue(Resource):
+#     def get(self, familyid):
+#         conn = db_connect.connect()
+#         query = conn.execute(
+#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is null group by a.task,a.id,a.familyid order by lastupdate desc".format(
+#                 familyid))
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+# Users
+
+# class UsersAll(Resource):
+#     def get(self):
+#         conn = db_connect.connect()
+#         query = conn.execute("select *  from person a")
+#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+#         return jsonify(result)
+
+
+
+# class ApproveTask(Resource):
+#     def put(self, id):
+#         conn = db_connect.connect()  # connect to database
+#         query = conn.execute("update tasks set approved  = 1  where id = {0}".format(id))
+#         return {'status': 'success'}

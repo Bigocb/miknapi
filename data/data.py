@@ -1,4 +1,5 @@
 import logging
+import datetime
 from flask import Flask, request, jsonify
 from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
 
@@ -53,6 +54,14 @@ class Post:
         self.message = 'Post'
 
     @staticmethod
+    def postlist(familyid=None):
+        conn = db_connect.connect()
+        q = "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(familyid)
+        query = dbconnection(q)
+        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+        return jsonify(results)
+
+    @staticmethod
     def newpost(task=None,familyid=None,approved=None,title=None,summary=None):
 
         task_p = task.replace("'", "")
@@ -64,7 +73,8 @@ class Post:
             familyid = familyid,
             approved=approved,
             title = title_p,
-            summary = summary_p
+            summary = summary_p,
+            addedts = datetime.datetime.now()
         )
 
         try:
@@ -159,6 +169,14 @@ class User:
     def __init__(self):
         self.message = 'User'
 
+    #refactor vue to not use this but use state
+    @staticmethod
+    def userid(email=None):
+        q = select([person_t.c.familyid]).where(person_t.c.email == email)
+        query = dbconnection(q)
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return result[0]
+
     @staticmethod
     def authorizeuser(new=None, firstname=None, lastname=None, email=None, password=None, username=None):
 
@@ -187,3 +205,5 @@ class User:
             query = dbconnection(q)
             results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
             return results[0]
+
+
