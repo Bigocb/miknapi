@@ -32,78 +32,122 @@ def dbconnection(q=None):
     return query
 
 
-def authorizeuser(new=None,firstName=None,lastName=None,email=None,password=None,username=None):
+class News:
 
-    if new:
-        personadd = Table('person', meta)
+    def __init__(self):
+        self.message = 'News'
 
-        ins = personadd.insert().values(
-            firstname=firstName,
-            lastname =lastName,
-            username=username,
-            password=password,
-            email=email
+    @staticmethod
+    def getusersources(familyid=None):
+        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
+        query = dbconnection(q)
+        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+        return jsonify(results)
+
+
+class Post:
+
+    def __init__(self):
+        self.message = 'Post'
+
+    @staticmethod
+    def manageposttag(add=None,delete=None,postid = None, tagid=None):
+
+        if add:
+        
+            tagtable = Table('taskids', meta)
+
+            ins = tagtable.insert().values(
+                taskid=postid,
+                tagid=tagid
+            )
+
+            try:
+
+                query = dbconnection(ins)
+                return 'Tag Added to Post'
+
+            except:
+
+                return 'Tag Not Added to post'
+
+
+class Tags:
+
+    def __init__(self):
+        self.message = 'Tags'
+
+    @staticmethod
+    def addtags(tag = None):
+        views = Table('tags', meta)
+
+        ins = views.insert().values(
+                tag = tag
         )
 
         try:
 
             query = dbconnection(ins)
-            return 'User Added'
+            return 'Tag Added'
 
         except:
 
-            return 'User Not Added'
+            return 'Tag Not Added'
 
-    else:
-        q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
-        query = dbconnection(q)
-        results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-        return results[0]
+    @staticmethod
+    def gettags(top=None):
 
+            if top:
+                join_obj_tags = tags_t \
+                    .join(tag_post_t, tags_t.c.id == tag_post_t.c.tagid)
+                listlimit = 10
 
-def getuserprefs(familyid=None):
-    q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
-    query = dbconnection(q)
-    results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-    return jsonify(results)
+                q = select([tags_t.c.tag, tags_t.c.id, func.count(tag_post_t.c.tagid)]) \
+                    .select_from(join_obj_tags) \
+                    .group_by(tags_t.c.tag, tags_t.c.id) \
+                    .order_by(func.count(tag_post_t.c.tagid).desc()) \
+                    .limit(listlimit)
 
+            else:
+                q = select([tags_t.c.id, tags_t.c.tag])
 
-def gettags(top=None):
+            query = dbconnection(q)
+            result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+            return jsonify(result)
 
-    if top:
-        join_obj_tags = tags_t \
-            .join(tag_post_t, tags_t.c.id == tag_post_t.c.tagid)
-        listlimit = 10
+    class User:
 
-        q = select([tags_t.c.tag,tags_t.c.id,func.count(tag_post_t.c.tagid)])\
-            .select_from(join_obj_tags)\
-            .group_by(tags_t.c.tag,tags_t.c.id)\
-            .order_by(func.count(tag_post_t.c.tagid).desc())\
-            .limit(listlimit)
+        def __init__(self):
+            self.message = 'User'
 
-    else:
-        q = select([tags_t.c.id, tags_t.c.tag])
+        @staticmethod
+        def authorizeuser(new=None, firstname=None, lastname=None, email=None, password=None, username=None):
 
-    query = dbconnection(q)
-    result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-    return jsonify(result)
+            if new:
+                personadd = Table('person', meta)
 
+                ins = personadd.insert().values(
+                    firstname=firstname,
+                    lastname=lastname,
+                    username=username,
+                    password=password,
+                    email=email
+                )
 
-def addtags(tag = None):
-    views = Table('tags', meta)
+                try:
 
-    ins = views.insert().values(
-            tag = tag
-    )
+                    query = dbconnection(ins)
+                    return 'User Added'
 
-    try:
+                except:
 
-        query = dbconnection(ins)
-        return 'Tag Added'
+                    return 'User Not Added'
 
-    except:
-
-        return 'Tag Not Added'
+            else:
+                q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
+                query = dbconnection(q)
+                results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+                return results[0]
 
 
 
