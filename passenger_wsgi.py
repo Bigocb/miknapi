@@ -126,14 +126,14 @@ class UserEmail(Resource):
         return result[0]
 
 
-# class UserTasks(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
+class UserTasks(Resource):
+    def get(self, familyid):
+        conn = db_connect.connect()
+        query = conn.execute(
+            "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(
+                familyid))
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return jsonify(result)
 
 
 # class UserToDo(Resource):
@@ -422,7 +422,7 @@ api.add_resource(UsersAll, '/users')  # used
 # api.add_resource(ApprovalQueue, '/approve/tasks/<familyid>')  # used
 api.add_resource(UserRecentlyAdded, '/person/recent/<familyid>')  # used
 # api.add_resource(UserTasksMostRead, '/read/tasks/<familyid>')  # refactor to /person/frequent
-# api.add_resource(UserTasks, '/tasks/<familyid>')  # used
+api.add_resource(UserTasks, '/tasks/<familyid>')  # used
 api.add_resource(UserEmail, '/person/<email>')  # used
 api.add_resource(Tags, '/tags')  # used
 # api.add_resource(UserPostsByTag, '/tag/<tag>')
