@@ -115,7 +115,8 @@ class Tags:
             result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
             return jsonify(result)
 
-    class User:
+
+class User:
 
         def __init__(self):
             self.message = 'User'
