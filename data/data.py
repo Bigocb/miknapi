@@ -54,7 +54,7 @@ class Post:
     def manageposttag(add=None,delete=None,postid = None, tagid=None):
 
         if add:
-        
+
             tagtable = Table('taskids', meta)
 
             ins = tagtable.insert().values(
