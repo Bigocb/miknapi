@@ -114,6 +114,17 @@ class Posts(Resource):
         query = postclass.postlist(familyid=familyid)
         return query
 
+    
+# refector as part of posts class
+class UserRecentlyAdded(Resource):
+    def get(self, familyid):
+        conn = db_connect.connect()
+        query = conn.execute(
+            "select a.addedts, a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = '{0}' and a.addedts > NOW() - INTERVAL 1 WEEK and approved is not null and (b.taskid not in (select taskid from taskids a join tags b on a.tagid = b.id where lower(b.tag) = 'archive') or b.taskid is null)  group by a.task,a.id,a.familyid order by addedts desc limit 5".format(
+                familyid))
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return jsonify(result)
+
 
 class UserEmail(Resource):
     def get(self, email):
@@ -335,7 +346,7 @@ api.add_resource(PostTags, '/post/tag')  # used
 # api.add_resource(UsersAll, '/users')  # used
 # api.add_resource(ApproveTask, '/app/task/<id>')  # used
 # api.add_resource(ApprovalQueue, '/approve/tasks/<familyid>')  # used
-# api.add_resource(UserRecentlyAdded, '/person/recent/<familyid>')  # used
+api.add_resource(UserRecentlyAdded, '/person/recent/<familyid>')  # used
 # api.add_resource(UserTasksMostRead, '/read/tasks/<familyid>')
 
 # class UserToDo(Resource):
@@ -378,15 +389,6 @@ api.add_resource(PostTags, '/post/tag')  # used
 #         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
 #         return jsonify(result)
 
-
-# class UserRecentlyAdded(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.addedts, a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = '{0}' and a.addedts > NOW() - INTERVAL 1 WEEK and approved is not null and (b.taskid not in (select taskid from taskids a join tags b on a.tagid = b.id where lower(b.tag) = 'archive') or b.taskid is null)  group by a.task,a.id,a.familyid order by addedts desc limit 5".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
 
 
 # class UserTasksMostRead(Resource):
