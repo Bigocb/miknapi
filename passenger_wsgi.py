@@ -88,15 +88,6 @@ class PostTags(Resource):
         query = Post.manageposttag(add=add,delete=delete,postid=taskid,tagid=tags)
         return query
 
-# class DeleteTags(Resource):
-#     def delete(self, taskid):
-#         tag = request.json['tag']
-#         query = conn.execute(
-#             "delete taskids from taskids join tags on tagid = id  where taskid = '{0}' and tag = '{1}'".format(taskid,
-#                                                                                                                tag))
-#         return {'status': 'Tag Added'}
-
-
 class NewTasksInternal(Resource):
     def post(self):
         logging.info('connecting')
@@ -427,7 +418,7 @@ api.add_resource(GetNewsSources, '/news/sources')
 
 api.add_resource(NewTasksInternal, '/new/post')
 api.add_resource(TaskDetail, '/post/<id>')
-api.add_resource(PostList, '/post/list/<id>')
+api.add_resource(PostList, '/post/list/<id>') #change
 
 api.add_resource(Userlists, '/person/list/<familyid>')  # u
 api.add_resource(Userlistposts, '/person/list/posts/<familyid>')  # u

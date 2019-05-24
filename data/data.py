@@ -18,7 +18,7 @@ logger.addHandler(handler)
 
 db_connect = create_engine('mysql+pymysql://phelper:Lscooter11@mysql.monkeyandjoe.com:3306/phelper')
 
-#DB Setup
+# DB Setup
 meta = MetaData(db_connect, reflect=True)
 user_prefs_t = meta.tables['userprefs']
 tags_t = meta.tables['tags']
@@ -39,7 +39,8 @@ class News:
 
     @staticmethod
     def getusersources(familyid=None):
-        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(user_prefs_t.c.userid == familyid)
+        q = select([user_prefs_t.c.prefvalue]).where(user_prefs_t.c.variable == 2).where(
+            user_prefs_t.c.userid == familyid)
         query = dbconnection(q)
         results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
         return jsonify(results)
@@ -51,11 +52,11 @@ class Post:
         self.message = 'Post'
 
     @staticmethod
-    def manageposttag(add=None,delete=None,postid = None, tagid=None):
+    def manageposttag(add=None, delete=None, postid=None, tagid=None):
+
+        tagtable = Table('taskids', meta)
 
         if add:
-
-            tagtable = Table('taskids', meta)
 
             ins = tagtable.insert().values(
                 taskid=postid,
@@ -70,6 +71,16 @@ class Post:
             except:
 
                 return 'Tag Not Added to post'
+        else:
+            delete = tagtable.delete().where(
+                tagtable.c.taskid == postid
+            ).where(tagtable.c.tag == tagid)
+
+            try:
+                query = dbconnection(delete)
+                return 'Tag Removed from Post'
+            except:
+                return 'Tag Not Removed From post'
 
 
 class Tags:
@@ -78,11 +89,11 @@ class Tags:
         self.message = 'Tags'
 
     @staticmethod
-    def addtags(tag = None):
+    def addtags(tag=None):
         views = Table('tags', meta)
 
         ins = views.insert().values(
-                tag = tag
+            tag=tag
         )
 
         try:
@@ -97,62 +108,55 @@ class Tags:
     @staticmethod
     def gettags(top=None):
 
-            if top:
-                join_obj_tags = tags_t \
-                    .join(tag_post_t, tags_t.c.id == tag_post_t.c.tagid)
-                listlimit = 10
+        if top:
+            join_obj_tags = tags_t \
+                .join(tag_post_t, tags_t.c.id == tag_post_t.c.tagid)
+            listlimit = 10
 
-                q = select([tags_t.c.tag, tags_t.c.id, func.count(tag_post_t.c.tagid)]) \
-                    .select_from(join_obj_tags) \
-                    .group_by(tags_t.c.tag, tags_t.c.id) \
-                    .order_by(func.count(tag_post_t.c.tagid).desc()) \
-                    .limit(listlimit)
+            q = select([tags_t.c.tag, tags_t.c.id, func.count(tag_post_t.c.tagid)]) \
+                .select_from(join_obj_tags) \
+                .group_by(tags_t.c.tag, tags_t.c.id) \
+                .order_by(func.count(tag_post_t.c.tagid).desc()) \
+                .limit(listlimit)
 
-            else:
-                q = select([tags_t.c.id, tags_t.c.tag])
+        else:
+            q = select([tags_t.c.id, tags_t.c.tag])
 
-            query = dbconnection(q)
-            result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-            return jsonify(result)
+        query = dbconnection(q)
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return jsonify(result)
 
 
 class User:
 
-        def __init__(self):
-            self.message = 'User'
+    def __init__(self):
+        self.message = 'User'
 
-        @staticmethod
-        def authorizeuser(new=None, firstname=None, lastname=None, email=None, password=None, username=None):
+    @staticmethod
+    def authorizeuser(new=None, firstname=None, lastname=None, email=None, password=None, username=None):
 
-            if new:
-                personadd = Table('person', meta)
+        if new:
+            personadd = Table('person', meta)
 
-                ins = personadd.insert().values(
-                    firstname=firstname,
-                    lastname=lastname,
-                    username=username,
-                    password=password,
-                    email=email
-                )
+            ins = personadd.insert().values(
+                firstname=firstname,
+                lastname=lastname,
+                username=username,
+                password=password,
+                email=email
+            )
 
-                try:
+            try:
 
-                    query = dbconnection(ins)
-                    return 'User Added'
+                query = dbconnection(ins)
+                return 'User Added'
 
-                except:
+            except:
 
-                    return 'User Not Added'
+                return 'User Not Added'
 
-            else:
-                q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
-                query = dbconnection(q)
-                results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-                return results[0]
-
-
-
-
-
-
-
+        else:
+            q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
+            query = dbconnection(q)
+            results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
+            return results[0]
