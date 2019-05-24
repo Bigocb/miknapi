@@ -1,5 +1,11 @@
 import sys, os
 import time
+
+INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
+if sys.executable != INTERP:
+    os.execl(INTERP, INTERP, *sys.argv)
+sys.path.append(os.getcwd())
+
 import logging
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
@@ -7,11 +13,6 @@ from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
 from newsapi.newsapi_client import NewsApiClient
 from data.data import News, Tags, User, Post
-
-INTERP = os.path.join(os.environ['HOME'], 'api.mikn.app', 'venv/bin', 'python')
-if sys.executable != INTERP:
-    os.execl(INTERP, INTERP, *sys.argv)
-sys.path.append(os.getcwd())
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
