@@ -58,7 +58,7 @@ def authorizeuser(new=None,firstName=None,lastName=None,email=None,password=None
         q = select(['*']).where(person_t.c.password == password).where(person_t.c.username == username)
         query = dbconnection(q)
         results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
-        return jsonify(results)
+        return results[0]
 
 
 def getuserprefs(familyid=None):
