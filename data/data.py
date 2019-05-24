@@ -24,6 +24,7 @@ user_prefs_t = meta.tables['userprefs']
 tags_t = meta.tables['tags']
 tag_post_t = meta.tables['taskids']
 person_t = meta.tables['person']
+post_t = meta.tables['tasks']
 
 
 def dbconnection(q=None):
@@ -50,6 +51,32 @@ class Post:
 
     def __init__(self):
         self.message = 'Post'
+
+    @staticmethod
+    def newpost(task=None,familyid=None,approved=None,title=None,summary=None):
+
+        task_p = task.replace("'", "")
+        title_p = title.replace("'", "")
+        summary_p = summary.replace("'", "")
+
+        ins = post_t.insert().values(
+            task = task_p,
+            familyid = familyid,
+            approved=approved,
+            title = title_p,
+            summary = summary_p
+        )
+
+        try:
+            query = dbconnection(ins)
+
+            q = select(['*']).where(post_t.c.title == title_p)
+
+            result = dbconnection(q)
+
+            return jsonify(result)
+        except:
+            return 'Post Not Added'
 
     @staticmethod
     def manageposttag(add=None, delete=None, postid=None, tagid=None):
