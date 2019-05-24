@@ -54,9 +54,12 @@ class Post:
         self.message = 'Post'
 
     @staticmethod
-    def postlist(familyid=None):
-        conn = db_connect.connect()
-        q = "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(familyid)
+    def postlist(recent=None,familyid=None):
+        if recent:
+            q =  "select a.addedts, a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  = '{0}' and a.addedts > NOW() - INTERVAL 1 WEEK and approved is not null and (b.taskid not in (select taskid from taskids a join tags b on a.tagid = b.id where lower(b.tag) = 'archive') or b.taskid is null)  group by a.task,a.id,a.familyid order by addedts desc limit 5".format(familyid)
+        else:
+            q = "select a.summary as summary,a.title,a.task as task,a.id,lastupdate,a.familyid,GROUP_CONCAT(c.tag) as tags  from tasks a left join taskids b on a.id = b.taskid left join tags c on b.tagid = c.id  where familyid  ='{0}' and approved is not null group by a.task,a.id,a.familyid order by lastupdate desc".format(familyid)
+
         query = dbconnection(q)
         results = [dict(zip(tuple(query.keys()), i)) for i in query.cursor.fetchall()]
         return jsonify(results)
