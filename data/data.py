@@ -1,7 +1,7 @@
 import logging
 import datetime
 from flask import Flask, request, jsonify
-from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func
+from sqlalchemy import create_engine, select, MetaData, Table, insert, or_, func,update
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -34,6 +34,12 @@ def dbconnection(q=None):
     return query
 
 
+class Lists:
+
+    def __init__(self):
+        self.message = 'News'
+
+
 class News:
 
     def __init__(self):
@@ -52,6 +58,48 @@ class Post:
 
     def __init__(self):
         self.message = 'Post'
+
+    @staticmethod
+    def singlepost(id=id,task=None, title=None,summary=None):
+
+        task_p = task.replace("'", "")
+        title_p = title.replace("'", "")
+        summary_p = summary.replace("'", "")
+
+        upd = update(post_t)\
+            .where(id==id)\
+            .values(
+            title=title_p,
+            task=task_p,
+            summary=summary_p)
+
+        try:
+            query = dbconnection(upd)
+
+            q = select(['*']).where(post_t.c.id == id)
+
+            result = dbconnection(q)
+
+            return jsonify(result)
+        except:
+            return 'Post Not Updated'
+
+    @staticmethod
+    def updreadcount(id=None):
+
+        upd = update(post_t)\
+            .where(post_t.c.id ==id).values(
+            post_t.c.readcount == post_t.c.readcount+1
+        )
+
+        try:
+            query = dbconnection(upd)
+            return 'updated'
+        except:
+            return 'not updated'
+
+
+
 
     @staticmethod
     def postlist(recent=None,familyid=None):
