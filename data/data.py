@@ -67,7 +67,7 @@ class Post:
         summary_p = summary.replace("'", "")
 
         upd = update(post_t)\
-            .where(id==id)\
+            .where(post_t.c.id==id)\
             .values(
             title=title_p,
             task=task_p,
@@ -88,7 +88,8 @@ class Post:
     def updreadcount(id=None):
 
         upd = update(post_t)\
-            .where(post_t.c.id ==id).values(
+            .where(post_t.c.id ==id)\
+            .values(
             post_t.c.readcount == post_t.c.readcount+1
         )
 
