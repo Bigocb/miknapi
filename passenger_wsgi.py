@@ -122,7 +122,7 @@ class UserEmail(Resource):
         return query
 
 
-class TaskDetail(Resource):
+class PostDetail(Resource):
     def put(self, id):
         task = request.json['task']
         title = request.json['title']
@@ -130,6 +130,8 @@ class TaskDetail(Resource):
         query = postclass.singlepost(id=id,title=title,task=task,summary=summary)
         return query
 
+
+# TODO pick up here
     def delete(self, id):
         logging.info('connecting')
         conn = db_connect.connect()
@@ -195,29 +197,13 @@ class GetNewsSources(Resource):
 class GetUsersNews(Resource):
 
     def get(self, familyid):
-        start = time.time()
-        logger.info(start)
         conn = db_connect.connect()
         q = select([user_prefs_t.c.prefvalue, user_prefs_t.c.id]).where(user_prefs_t.c.variable == 2).where(
             user_prefs_t.c.userid == familyid)
         query = conn.execute(q)
         topiclist = ','.join([r[0] for r in query.cursor.fetchall()])
-        dbend = time.time()
-        logger.info(dbend)
-        logging.info(q)
-        logging.info('test')
-        logging.info(topiclist)
-        t = topiclist
-        logging.info(t)
-        apistart = time.time()
-        logger.info(apistart)
         all_articles = newsapi.get_everything(sources=topiclist)
-        apiebd = time.time()
-        logger.info(apiebd)
         articles = all_articles['articles']
-        end = time.time()
-        diff = end - start
-        logger.info(diff)
 
         return articles
 
@@ -225,16 +211,91 @@ class GetUsersNews(Resource):
         result = newsclass.getusersources(familyid)
         return result
 
+
+class Userlists(Resource):
+    def get(self, familyid):
+        logging.info('connecting')
+        conn = db_connect.connect()
+        query = conn.execute(
+            "select GROUP_CONCAT(name) as name from userlists  where familyid  ='{0}'".format(familyid))
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        logging.info(result)
+        return result[0]
+
+    def put(self, familyid):
+        logging.info('connecting')
+        conn = db_connect.connect()
+        name = request.json['name']
+        query = conn.execute("insert into userlists(familyid,name) values('{0}','{1}')".format(familyid, name))
+        return {'status': 'success'}
+
+    def delete(self, familyid):
+        logging.info('connecting')
+        conn = db_connect.connect()
+        name = request.json['name']
+        query = conn.execute("delete from userlists where name = '{1}' and familyid = '{0}'".format(familyid, name))
+        return {'status': 'success'}
+
+
+class Userlistposts(Resource):
+    def get(self, familyid):
+        conn = db_connect.connect()
+        query = conn.execute(
+            "select postid as id,c.title as title, a.name as status  from userlists a join userlistposts b on a.id = b.listid join tasks c on b.postid = c.id  where a.familyid  ='{0}'".format(
+                familyid))
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return jsonify(result)
+
+    def put(self, familyid):
+        logging.debug(request.json)
+        conn = db_connect.connect()
+        postid = request.json['id']
+        status = request.json['status']
+        query = conn.execute(
+            "UPDATE userlistposts SET userlistposts.listid = (select id from userlists where userlists.name = '{0}' and familyid ='{2}' ) where userlistposts.postid = '{1}'".format(
+                status, postid, familyid))
+        return {'status': 'success'}
+
+    def post(self, familyid):
+        logging.info(request.json)
+        conn = db_connect.connect()
+        postid = request.json['postid']
+        name = request.json['name']
+        listid = request.json['listid']
+        query = conn.execute(
+            "insert into userlistposts(postid,listid,name) values('{1}',(select id from userlists where name = '{0}' and familyid = '{3}'),(select title from tasks where id = '{2}'))".format(
+                listid, postid, name, familyid))
+        return {'status': 'success'}
+
+    def delete(self, familyid):
+        logging.info(request.json)
+        conn = db_connect.connect()
+        postid = request.json['postid']
+        listid = request.json['listid']
+        query = conn.execute(
+            "delete from userlistposts where postid = '{0}' and listid = (select id from userlists where name = '{1}' and familyid = '{2}') ".format(
+                postid, listid, familyid))
+        return {'status': 'success'}
+
+
+class PostList(Resource):
+    def get(self, id):
+        conn = db_connect.connect()
+        query = conn.execute(
+            "select a.name as listname from userlists a join userlistposts b on a.id = b.listid where b.postid = '{0}'".format(
+                id))
+        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
+        return jsonify(result)
+
 #todo
 api.add_resource(GetUsersNews, '/news/user/<familyid>')
 api.add_resource(GetNewsSources, '/news/sources')
+api.add_resource(PostDetail, '/post/<id>')
 
-api.add_resource(TaskDetail, '/post/<id>')
-
-# api.add_resource(PostList, '/post/list/<id>') #change
-# api.add_resource(Userlists, '/person/list/<familyid>')  # u
-# api.add_resource(Userlistposts, '/person/list/posts/<familyid>')  # u
-# api.add_resource(UserEmail, '/person/<email>')  # used
+api.add_resource(PostList, '/post/list/<id>') #change
+api.add_resource(Userlists, '/person/list/<familyid>')  # u
+api.add_resource(Userlistposts, '/person/list/posts/<familyid>')  # u
+api.add_resource(UserEmail, '/person/<email>')  # used
 
 #refactored
 api.add_resource(Posts, '/posts/<familyid>')  # used
@@ -331,78 +392,3 @@ api.add_resource(Tags, '/tags')  # used
 #         query = conn.execute("update tasks set approved  = 1  where id = {0}".format(id))
 #         return {'status': 'success'}
 
-# ###################
-# class Userlists(Resource):
-#     def get(self, familyid):
-#         logging.info('connecting')
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select GROUP_CONCAT(name) as name from userlists  where familyid  ='{0}'".format(familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         logging.info(result)
-#         return result[0]
-#
-#     def put(self, familyid):
-#         logging.info('connecting')
-#         conn = db_connect.connect()
-#         name = request.json['name']
-#         query = conn.execute("insert into userlists(familyid,name) values('{0}','{1}')".format(familyid, name))
-#         return {'status': 'success'}
-#
-#     def delete(self, familyid):
-#         logging.info('connecting')
-#         conn = db_connect.connect()
-#         name = request.json['name']
-#         query = conn.execute("delete from userlists where name = '{1}' and familyid = '{0}'".format(familyid, name))
-#         return {'status': 'success'}
-#
-#
-# class Userlistposts(Resource):
-#     def get(self, familyid):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select postid as id,c.title as title, a.name as status  from userlists a join userlistposts b on a.id = b.listid join tasks c on b.postid = c.id  where a.familyid  ='{0}'".format(
-#                 familyid))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)
-#
-#     def put(self, familyid):
-#         logging.debug(request.json)
-#         conn = db_connect.connect()
-#         postid = request.json['id']
-#         status = request.json['status']
-#         query = conn.execute(
-#             "UPDATE userlistposts SET userlistposts.listid = (select id from userlists where userlists.name = '{0}' and familyid ='{2}' ) where userlistposts.postid = '{1}'".format(
-#                 status, postid, familyid))
-#         return {'status': 'success'}
-#
-#     def post(self, familyid):
-#         logging.info(request.json)
-#         conn = db_connect.connect()
-#         postid = request.json['postid']
-#         name = request.json['name']
-#         listid = request.json['listid']
-#         query = conn.execute(
-#             "insert into userlistposts(postid,listid,name) values('{1}',(select id from userlists where name = '{0}' and familyid = '{3}'),(select title from tasks where id = '{2}'))".format(
-#                 listid, postid, name, familyid))
-#         return {'status': 'success'}
-#
-#     def delete(self, familyid):
-#         logging.info(request.json)
-#         conn = db_connect.connect()
-#         postid = request.json['postid']
-#         listid = request.json['listid']
-#         query = conn.execute(
-#             "delete from userlistposts where postid = '{0}' and listid = (select id from userlists where name = '{1}' and familyid = '{2}') ".format(
-#                 postid, listid, familyid))
-#         return {'status': 'success'}
-#
-#
-# class PostList(Resource):
-#     def get(self, id):
-#         conn = db_connect.connect()
-#         query = conn.execute(
-#             "select a.name as listname from userlists a join userlistposts b on a.id = b.listid where b.postid = '{0}'".format(
-#                 id))
-#         result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-#         return jsonify(result)

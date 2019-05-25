@@ -89,8 +89,7 @@ class Post:
 
         upd = update(post_t)\
             .where(post_t.c.id ==id)\
-            .values(
-            post_t.c.readcount == post_t.c.readcount+1
+            .values(readcount=post_t.c.readcount+1
         )
 
         try:
@@ -220,14 +219,6 @@ class User:
 
     def __init__(self):
         self.message = 'User'
-
-    #refactor vue to not use this but use state
-    @staticmethod
-    def userid(email=None):
-        q = select([person_t.c.familyid]).where(person_t.c.email == email)
-        query = dbconnection(q)
-        result = [dict(zip(tuple(query.keys()), i)) for i in query.cursor]
-        return result[0]
 
     @staticmethod
     def authorizeuser(new=None, firstname=None, lastname=None, email=None, password=None, username=None):
